@@ -8,6 +8,14 @@ tests/test_deterministic.py         registration, validation, auth, transitions,
 tests/test_intelligent.py           mocked-LLM tests: outcomes, consensus rule, failures, bounds, injection
 tests/gltest_studio/                UNVERIFIED official-gltest smoke tests (never executed by me)
 
+## Local Test Results (14 October 2026)
+
+- Deterministic tests: 67 passed.
+- Intelligent tests: 40 passed.
+- Total: 107 passed; 0 failed.
+- Test method: Python unittest with a local SDK stub and mocked LLM responses.
+- Bradbury manual smoke tests: registration, evidence submission, INCONCLUSIVE assessment, assessment view, and dataset count verified. Contract: `0x4348eafBeeC001C9c91A5d21CceE0386e5e97286`. Full checklist and official gltest smoke tests remain unverified.
+
 ## 1. Run locally (executed, works with stdlib only)
     cd PoisonGuardAI
     python3 -m unittest discover -s tests -p "test_*.py" -v
