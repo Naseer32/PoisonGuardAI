@@ -11,7 +11,7 @@ tests/gltest_studio/                UNVERIFIED official-gltest smoke tests (neve
 ## 1. Run locally (executed, works with stdlib only)
     cd PoisonGuardAI
     python3 -m unittest discover -s tests -p "test_*.py" -v
-(or `pip install pytest && pytest tests -q`; the gltest_studio folder needs genlayer-test, so pytest will
+(or `pip install pytest && pytest tests/test_deterministic.py tests/test_intelligent.py -q`; the gltest_studio folder needs genlayer-test, so pytest will
 error on it unless you pass `tests/test_deterministic.py tests/test_intelligent.py`.)
 
 Run against another source file:  POISONGUARD_CONTRACT=/path/to/file.py python3 -m unittest discover -s tests
