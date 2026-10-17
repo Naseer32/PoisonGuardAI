@@ -8,6 +8,7 @@ tests/test_deterministic.py         registration, validation, auth, transitions,
 tests/test_intelligent.py           mocked-LLM tests: outcomes, consensus rule, failures, bounds, injection
 tests/gltest_studio/                UNVERIFIED official-gltest smoke tests (never executed by me)
 
+<<<<<<< HEAD
 ## Local Test Results (14 October 2026)
 
 - Deterministic tests: 67 passed.
@@ -20,10 +21,17 @@ tests/gltest_studio/                UNVERIFIED official-gltest smoke tests (neve
     cd PoisonGuardAI
     python3 -m unittest discover -s tests -p "test_*.py" -v
 (or `pip install pytest && pytest tests/test_deterministic.py tests/test_intelligent.py -q`; the gltest_studio folder needs genlayer-test, so pytest will
+=======
+## 1. Run locally (executed, works with stdlib only)
+    cd poisonguard
+    python3 -m unittest discover -s tests -p "test_*.py" -v
+(or `pip install pytest && pytest tests -q`; the gltest_studio folder needs genlayer-test, so pytest will
+>>>>>>> aeaf608 (PoisonGuardAI: compact Bradbury contract, Direct Mode suite (36 pass), gltest Studio suite, testing README)
 error on it unless you pass `tests/test_deterministic.py tests/test_intelligent.py`.)
 
 Run against another source file:  POISONGUARD_CONTRACT=/path/to/file.py python3 -m unittest discover -s tests
 
+<<<<<<< HEAD
 ## 2. Official GenLayer workflow (NOT run by me; verify against your installed version)
     pip install genlayer-test
     gltest --help                      # confirm flags and config for your version
@@ -32,6 +40,44 @@ Run against another source file:  POISONGUARD_CONTRACT=/path/to/file.py python3 
     gltest tests/gltest_studio -v      # adjust network flag/config as `gltest --help` shows
 Mock-LLM / validator setup in gltest is version-specific; I did not guess it. Use the manual steps below
 for the intelligent path.
+=======
+## 2. Official gltest Studio suite (run by the project owner in Studio; result reported, output not reviewed by the author)
+Files: tests/gltest_studio/common.py, test_deterministic_studio.py (17 tests, no LLM), test_intelligent_studio.py (9 tests, REAL validators + LLM,
+asserts invariants the contract enforces, never an exact LLM outcome).
+Status: syntax-checked; its own logic executed on a LOCAL SHIM (26/26 pass, 4 deliberately broken contract mutants caught).
+The project owner reports having run the whole suite in GenLayer Studio. That output was NOT shared with the author, so no pass/fail
+numbers are claimed here: fill them in the Results log below from your terminal's final summary line.
+API names (get_contract_factory, factory.deploy(args=[]), contract.m(args=[...]).transact()/.call(), contract.connect, create_account,
+tx_execution_succeeded/failed) were confirmed to exist in the installed genlayer-test (collection of all 26 tests succeeded);
+`default_account` does not exist in that version and was removed.
+Run it ONE STEP AT A TIME and send me each output:
+    1)  pip install genlayer-test
+    2)  gltest --help
+    3)  (start Studio as your docs say)  then from the project root:  gltest tests/gltest_studio/test_deterministic_studio.py -v
+    4)  PG_SKIP_LLM=1 is not needed for step 3. For the LLM part:  gltest tests/gltest_studio/test_intelligent_studio.py -v -s
+Never put tests/local_shim on PYTHONPATH when running the real gltest.
+Local self-check (no Studio): python3 tests/local_shim/run_suite.py benign   and   ... alarmist
+
+## 2b. Direct Mode suite (no Studio needed) -- run on real Direct Mode: 36 passed
+File: tests/direct/test_poison_guard_direct.py (36 tests). Fixture API read from the installed gltest source.
+Executed on the project owner's phone (Termux, real gltest Direct Mode): 36 passed in about 4 s (output seen by the author).
+Also executed on a LOCAL SHIM (36/36, 11 deliberately broken contract variants each caught). Two tests were corrected after the first
+real run because of Direct Mode behavior, not contract bugs: one contract per test, and warp() does not refresh gl.message_raw["datetime"].
+It mocks the LLM and does NOT run real validator consensus (run_validator replays the validator function against mocks).
+Run from the project root:   gltest tests/direct -v
+Local self-check:            python3 tests/local_shim_direct/run_direct.py
+
+## Results log (keep this honest: only record runs you actually saw)
+| Date | Where | Suite | Passed | Failed | Skipped | Evidence |
+|---|---|---|---|---|---|---|
+| 2026-10-17 | Android/Termux, gltest Direct Mode (no Studio) | tests/direct (36) | 36 | 0 | 0 | terminal output seen by the author |
+| ______ | Studio (chain type: ______, genlayer-test ______) | tests/gltest_studio deterministic (17) | ___ | ___ | ___ | reported by owner, not yet pasted |
+| ______ | Studio (chain type: ______) | tests/gltest_studio intelligent, real LLM (9) | ___ | ___ | ___ | reported by owner, not yet pasted |
+
+What these results do and do not show: Direct Mode shows the contract runs on the real GenLayer SDK and the rules hold against mocked LLM output.
+Only the Studio rows can show real validator consensus and real-LLM behavior (including how often the equivalence rule rejects a leader,
+i.e. UNDETERMINED). Passing tests is not mainnet readiness; see the checklist in section 4.
+>>>>>>> aeaf608 (PoisonGuardAI: compact Bradbury contract, Direct Mode suite (36 pass), gltest Studio suite, testing README)
 
 ## 3. Manual Studio / Bradbury verification (intelligent path)
 Use two accounts: A (deployer = owner) and B (submitter).
