@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PoisonGuard AI</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--card:#f3f4f6;--bd:#d1d5db;--ac:#b42318}
+@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--card:#1c1c1e;--bd:#333;--ac:#f97066}}
+body{margin:auto;padding:12px;background:var(--bg);color:var(--fg);font:16px system-ui,sans-serif;max-width:640px}
+h1{font-size:1.3rem}details{background:var(--card);border:1px solid var(--bd);border-radius:10px;margin:8px 0;padding:8px 12px}
+summary{font-weight:600;cursor:pointer}label{display:block;margin:8px 0 2px;font-size:.85rem}
+input,select{width:100%;box-sizing:border-box;padding:8px;font-size:16px;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:6px}
+button{margin-top:10px;padding:10px 14px;font-size:16px;border:0;border-radius:8px;background:var(--ac);color:#fff}
+pre{white-space:pre-wrap;word-break:break-all;background:var(--card);padding:10px;border-radius:8px;max-height:50vh;overflow:auto;font-size:.8rem}
+.s{font-size:.85rem;opacity:.8;word-break:break-all}
+</style></head><body>
+<h1>PoisonGuard AI</h1>
+<p class="s">Network: Bradbury<br>Contract: <span id="addr"></span><br>Datasets on chain: <b id="count">...</b><br>Wallet: <span id="wal">not connected</span></p>
+<button id="conn">Connect wallet</button>
+<div id="forms"></div>
+<h3>Result</h3><pre id="log">Ready.</pre>
+<script type="module">
+import * as sdk from "https://esm.sh/genlayer-js@1.1.8";
+import * as chains from "https://esm.sh/genlayer-js@1.1.8/chains";
+const ADDR="0x0932c34aa6e664245f7C3A7D4944B24217d9F061";
+const $=id=>document.getElementById(id);
+const ET=["PROVENANCE_RECORD","LABEL_AUDIT","FEATURE_ANALYSIS","TRIGGER_TEST","CONTROL_TEST","CLEAN_BASELINE","REPRODUCTION","OTHER"];
+const ST=["EVIDENCE_SUBMITTED","ASSESSED","UNDER_REVIEW","REJECTED","CLOSED"];
+const A=["assessment_id"];
+const SPEC={
+ register_dataset:{w:1,f:[A,["dataset_name"],["dataset_version"],["content_hash"],["provenance"],["model_name"],["model_version"]]},
+ submit_evidence:{w:1,f:[A,["evidence_type",ET],["nature",["OBSERVATION","ALLEGATION"]],["summary"],["method"],["trials","int"],["hits","int"]]},
+ assess_dataset:{w:1,f:[A]},
+ update_assessment_status:{w:1,f:[A,["new_status",ST]]},
+ get_assessment:{f:[A]},
+ get_risk_summary:{f:[A]}
+};
+const fmt=v=>typeof v==="string"?v:JSON.stringify(v,(k,x)=>typeof x==="bigint"?x.toString():x instanceof Map?Object.fromEntries(x):x,2);
+const say=v=>{$("log").textContent=fmt(v)};
+const fail=e=>say("Error: "+(e&&(e.shortMessage||e.message)||e));
+const chain=chains.testnetBradbury;
+let client,account;
+$("addr").textContent=ADDR;
+const mk=acc=>sdk.createClient(acc?{chain,account:acc}:{chain});
+async function count(){try{$("count").textContent=String(await client.readContract({address:ADDR,functionName:"get_dataset_count",args:[]}))}catch(e){$("count").textContent="unavailable";fail(e)}}
+if(!chain){say("testnetBradbury is not exported by this SDK version. Exports: "+Object.keys(chains).join(", "))}
+else{client=mk();count()}
+$("conn").onclick=async()=>{try{
+ if(!window.ethereum)return say("No wallet found in this browser. Open this page inside a wallet browser (e.g. MetaMask).");
+ const r=await window.ethereum.request({method:"eth_requestAccounts"});
+ account=r[0];client=mk(account);
+ try{await client.connect("testnetBradbury")}catch(e){}
+ $("wal").textContent=account;count();
+}catch(e){fail(e)}};
+for(const [fn,s] of Object.entries(SPEC)){
+ const d=document.createElement("details");
+ d.innerHTML="<summary>"+fn+"</summary>"+s.f.map(([n,o])=>"<label>"+n+"</label>"+
+  (Array.isArray(o)?"<select name="+n+">"+o.map(x=>"<option>"+x+"</option>").join("")+"</select>":"<input name="+n+(o==="int"?" type=number min=0 value=0":"")+">")).join("")+
+  "<button>"+(s.w?"Send transaction":"Read")+"</button>";
+ d.querySelector("button").onclick=async()=>{try{
+  if(!client)return say("Client not ready.");
+  const args=s.f.map(([n,o])=>{const v=d.querySelector("[name="+n+"]").value;return o==="int"?BigInt(v||0):v});
+  if(!s.w){say("Reading...");return say(await client.readContract({address:ADDR,functionName:fn,args}))}
+  if(!account)return say("Connect a wallet first.");
+  say("Sending...");
+  const hash=await client.writeContract({address:ADDR,functionName:fn,args,value:0n});
+  say("Tx hash: "+hash+"\nWaiting for ACCEPTED...");
+  const rc=await client.waitForTransactionReceipt({hash,status:"ACCEPTED",retries:60,interval:5000});
+  say({hash,receipt:rc});count();
+ }catch(e){fail(e)}};
+ $("forms").appendChild(d);
+}
+</script></body></html>
