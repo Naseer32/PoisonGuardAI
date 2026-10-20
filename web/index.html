@@ -162,7 +162,8 @@ for(const [k,F] of Object.entries(FORMS)){
   btn.disabled=true;st("Sending transaction…");
   const hash=await client.writeContract({address:ADDR,functionName:F.fn,args,value:0n});
   st("Sent. Hash:\n"+hash+"\nWaiting for the network to accept it…");
-  await client.waitForTransactionReceipt({hash,status:"ACCEPTED",retries:60,interval:5000});
+  try{await client.waitForTransactionReceipt({hash,status:"ACCEPTED",retries:120,interval:5000})}
+  catch(e){if(/timed out/i.test(String((e&&e.message)||e))){$("#lid").value=args[0];return st("Still processing on the network. Your transaction was sent and may finish soon.\nHash:\n"+hash+"\nCheck the Lookup tab again in a few minutes.")}throw e}
   st("Accepted.\n"+hash,"ok");$("#lid").value=args[0];count();
  }catch(e){fail(e)}finally{btn.disabled=false}};
  $("#forms").appendChild(p);
