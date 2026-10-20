@@ -1,72 +1,173 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
 <title>PoisonGuard AI</title>
 <style>
-:root{--bg:#fff;--fg:#1a1a1a;--card:#f3f4f6;--bd:#d1d5db;--ac:#b42318}
-@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--card:#1c1c1e;--bd:#333;--ac:#f97066}}
-body{margin:auto;padding:12px;background:var(--bg);color:var(--fg);font:16px system-ui,sans-serif;max-width:640px}
-h1{font-size:1.3rem}details{background:var(--card);border:1px solid var(--bd);border-radius:10px;margin:8px 0;padding:8px 12px}
-summary{font-weight:600;cursor:pointer}label{display:block;margin:8px 0 2px;font-size:.85rem}
-input,select{width:100%;box-sizing:border-box;padding:8px;font-size:16px;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:6px}
-button{margin-top:10px;padding:10px 14px;font-size:16px;border:0;border-radius:8px;background:var(--ac);color:#fff}
-pre{white-space:pre-wrap;word-break:break-all;background:var(--card);padding:10px;border-radius:8px;max-height:50vh;overflow:auto;font-size:.8rem}
-.s{font-size:.85rem;opacity:.8;word-break:break-all}
-</style></head><body>
-<h1>PoisonGuard AI</h1>
-<p class="s">Network: Bradbury<br>Contract: <span id="addr"></span><br>Datasets on chain: <b id="count">...</b><br>Wallet: <span id="wal">not connected</span></p>
-<button id="conn">Connect wallet</button>
+:root{color-scheme:dark;--bg:#0b1020;--card:#131a2e;--card2:#1a2340;--bd:#2a3558;--fg:#e8ecf7;--mut:#8b97b8;--ac:#6ee7d0;--ac2:#818cf8;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--inc:#93a4c8}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 500px at 85% -10%,#2a3a7a55,transparent),var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+.wrap{max-width:720px;margin:auto;padding:16px 14px 70px}
+header{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
+.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--ac2),var(--ac));display:grid;place-items:center;flex:none}
+h1{font-size:1.2rem;margin:0}
+h3{margin:0 0 6px;font-size:1.05rem}
+h4{margin:14px 0 6px;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.sub{color:var(--mut);font-size:.8rem;margin:0}
+.grow{flex:1;min-width:0}
+.card{background:linear-gradient(180deg,var(--card),#10172a);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card2);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:1.3rem}
+.stat span{color:var(--mut);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:.8rem;word-break:break-all}
+.btn{border:0;border-radius:11px;padding:11px 15px;font-weight:600;font-size:14px;font-family:inherit;color:var(--fg);background:var(--card2);border:1px solid var(--bd);cursor:pointer}
+.btn.pri{background:linear-gradient(135deg,var(--ac2),var(--ac));color:#06101f;border:0;width:100%;margin-top:14px}
+.btn.sm{padding:8px 12px;font-size:13px}
+.btn:disabled{opacity:.5}
+nav{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;scrollbar-width:none}
+nav button{flex:none;border:1px solid var(--bd);background:transparent;color:var(--mut);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;font-family:inherit}
+nav button.on{background:var(--ac2);border-color:var(--ac2);color:#fff}
+label{display:block;margin:12px 0 4px;font-size:.75rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+input,select,textarea{width:100%;padding:11px 12px;font-size:16px;font-family:inherit;background:#0d1326;color:var(--fg);border:1px solid var(--bd);border-radius:10px}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ac2);border-color:transparent}
+.row{display:flex;gap:8px;margin-top:12px}.row .btn{flex:1}
+.st{margin:10px 0;padding:10px 12px;border-radius:12px;background:var(--card2);border-left:4px solid var(--ac2);font-size:.85rem;word-break:break-word;white-space:pre-wrap}
+.st.err{border-color:var(--bad)}.st.ok{border-color:var(--ok)}
+.st:empty{display:none}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{padding:6px 12px;border-radius:999px;font-weight:700;font-size:.8rem;letter-spacing:.04em}
+.badge.ok{background:#34d3991f;color:var(--ok)}.badge.warn{background:#fbbf2420;color:var(--warn)}
+.badge.bad{background:#f8717122;color:var(--bad)}.badge.inc{background:#93a4c824;color:var(--inc)}
+.pill{padding:4px 10px;border-radius:999px;background:var(--card2);font-size:.75rem;color:var(--mut)}
+.meter{height:10px;border-radius:99px;background:#0d1326;margin:12px 0 4px;overflow:hidden}
+.meter i{display:block;height:100%;border-radius:99px}
+.meter .ok{background:var(--ok)}.meter .warn{background:var(--warn)}.meter .bad{background:var(--bad)}.meter .inc{background:var(--inc)}
+.big{font-size:2rem;font-weight:800;line-height:1}
+.warnbox{background:#fbbf2418;border:1px solid #fbbf2455;color:var(--warn);padding:9px 12px;border-radius:12px;margin:12px 0;font-size:.85rem}
+ul{margin:0;padding-left:18px}li{margin:4px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kv{background:var(--card2);border-radius:10px;padding:8px 10px}
+.kv span{display:block;font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.kv b{font-size:.95rem;word-break:break-word}
+.ev{background:var(--card2);border-radius:12px;padding:10px 12px;margin:8px 0}
+.ev small{color:var(--mut)}
+details{margin-top:12px}summary{color:var(--mut);cursor:pointer;font-size:.85rem}
+pre{white-space:pre-wrap;word-break:break-all;background:#0d1326;padding:10px;border-radius:10px;font-size:.72rem;max-height:40vh;overflow:auto}
+.empty{color:var(--mut);text-align:center;padding:18px 0;font-size:.9rem}
+</style></head><body><div class="wrap">
+<header>
+ <div class="logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06101f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5L16 9.5"/></svg></div>
+ <div class="grow"><h1>PoisonGuard AI</h1><p class="sub">Training-data integrity registry</p></div>
+ <button class="btn sm" id="conn">Connect</button>
+</header>
+<div class="card"><div class="stats">
+ <div class="stat"><b id="count">…</b><span>Datasets on chain</span></div>
+ <div class="stat"><b>Bradbury</b><span>Network</span></div>
+</div>
+<h4>Contract</h4><div class="mono" id="addr"></div>
+<h4>Wallet</h4><div class="mono" id="wal">Not connected</div></div>
+<div class="st" id="st"></div>
+<nav id="nav"><button data-t="lookup" class="on">Lookup</button><button data-t="register">Register</button><button data-t="evidence">Evidence</button><button data-t="assess">Assess</button><button data-t="status">Status</button></nav>
+<section class="card panel" id="p-lookup">
+ <h3>Look up an assessment</h3><p class="sub">Read-only. No wallet needed.</p>
+ <label>assessment id</label><input id="lid" placeholder="poison-test-001" autocapitalize="off" autocorrect="off">
+ <div class="row"><button class="btn" id="b-sum">Risk summary</button><button class="btn" id="b-full">Full assessment</button></div>
+ <div id="out"><p class="empty">Enter an ID to see the result.</p></div>
+</section>
 <div id="forms"></div>
-<h3>Result</h3><pre id="log">Ready.</pre>
+</div>
 <script type="module">
 import * as sdk from "https://esm.sh/genlayer-js@1.1.8";
 import * as chains from "https://esm.sh/genlayer-js@1.1.8/chains";
 const ADDR="0x0932c34aa6e664245f7C3A7D4944B24217d9F061";
-const $=id=>document.getElementById(id);
-const ET=["PROVENANCE_RECORD","LABEL_AUDIT","FEATURE_ANALYSIS","TRIGGER_TEST","CONTROL_TEST","CLEAN_BASELINE","REPRODUCTION","OTHER"];
-const ST=["EVIDENCE_SUBMITTED","ASSESSED","UNDER_REVIEW","REJECTED","CLOSED"];
-const A=["assessment_id"];
-const SPEC={
- register_dataset:{w:1,f:[A,["dataset_name"],["dataset_version"],["content_hash"],["provenance"],["model_name"],["model_version"]]},
- submit_evidence:{w:1,f:[A,["evidence_type",ET],["nature",["OBSERVATION","ALLEGATION"]],["summary"],["method"],["trials","int"],["hits","int"]]},
- assess_dataset:{w:1,f:[A]},
- update_assessment_status:{w:1,f:[A,["new_status",ST]]},
- get_assessment:{f:[A]},
- get_risk_summary:{f:[A]}
-};
-const fmt=v=>typeof v==="string"?v:JSON.stringify(v,(k,x)=>typeof x==="bigint"?x.toString():x instanceof Map?Object.fromEntries(x):x,2);
-const say=v=>{$("log").textContent=fmt(v)};
-const fail=e=>say("Error: "+(e&&(e.shortMessage||e.message)||e));
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=v=>v instanceof Map?Object.fromEntries([...v].map(([k,x])=>[k,norm(x)])):Array.isArray(v)?v.map(norm):typeof v==="bigint"?Number(v):(v&&typeof v==="object")?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,norm(x)])):v;
+const nice=s=>String(s).replaceAll("_"," ");
+const short=a=>a?a.slice(0,8)+"…"+a.slice(-6):"";
+const st=(m,c)=>{const e=$("#st");e.className="st "+(c||"");e.textContent=m||""};
+const fail=e=>st("Error: "+((e&&(e.shortMessage||e.message))||e),"err");
 const chain=chains.testnetBradbury;
 let client,account;
-$("addr").textContent=ADDR;
+$("#addr").textContent=ADDR;
+
+const list=(t,a)=>a&&a.length?`<h4>${t}</h4><ul>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"";
+function view(raw,full){
+ const d=norm(raw),oc=d.outcome||"NOT_ASSESSED",sc=Math.max(0,Math.min(100,Number(d.risk_score||0)));
+ const col={LOW_RISK:"ok",ELEVATED_RISK:"warn",HIGH_RISK:"bad"}[oc]||"inc";
+ let h=`<div class="top" style="margin-top:14px"><span class="badge ${col}">${esc(nice(oc))}</span>`;
+ if(d.evidence_quality)h+=`<span class="pill">Evidence: ${esc(d.evidence_quality)}</span>`;
+ if(d.status)h+=`<span class="pill">${esc(nice(d.status))}</span>`;
+ h+=`</div><div class="meter"><i class="${col}" style="width:${sc}%"></i></div><div><span class="big">${sc}</span><span class="sub"> / 100 risk score</span></div>`;
+ if(d.stale)h+=`<div class="warnbox">This result is stale: evidence changed after the last assessment. Run the assessment again.</div>`;
+ if(d.explanation)h+=`<h4>Explanation</h4><p style="margin:0">${esc(d.explanation)}</p>`;
+ if(d.next_verification_step)h+=`<h4>Next step</h4><p style="margin:0">${esc(d.next_verification_step)}</p>`;
+ if(d.metrics){h+=`<h4>Metrics</h4><div class="grid">`+Object.entries(d.metrics).map(([k,v])=>`<div class="kv"><span>${esc(nice(k.replace(/_pm$/,"")))}</span><b>${k.endsWith("_pm")?esc(v/10)+"%":esc(v)}</b></div>`).join("")+`</div>`}
+ if(d.supported_findings&&d.supported_findings.length)h+=`<h4>Findings</h4>`+d.supported_findings.map(f=>`<div class="ev"><b>${esc(nice(f.category))}</b><br>${esc(f.statement)}<br><small>${esc(nice(f.source||""))}</small></div>`).join("");
+ h+=list("Missing tests",d.missing_tests)+list("Alternative explanations",d.alternative_explanations)+list("Confidence limitations",d.confidence_limitations);
+ if(full){
+  h+=`<h4>Dataset</h4><div class="grid">`+[["name",d.dataset_name],["version",d.dataset_version],["model",d.model_name],["model version",d.model_version],["registered",d.registered_at],["assessed",d.assessed_at],["submitter",short(d.submitter)],["mode",d.evaluation_mode]].filter(x=>x[1]).map(([k,v])=>`<div class="kv"><span>${k}</span><b>${esc(v)}</b></div>`).join("")+`</div>`;
+  if(d.content_hash)h+=`<h4>Content hash</h4><div class="mono">${esc(d.content_hash)}</div>`;
+  if(d.provenance)h+=`<h4>Provenance</h4><p style="margin:0">${esc(d.provenance)}</p>`;
+  if(d.evidence&&d.evidence.length)h+=`<h4>Evidence (${d.evidence.length})</h4>`+d.evidence.map(e=>`<div class="ev"><b>${esc(nice(e.type))}</b> <small>${esc(e.nature)}${e.trials?" · "+esc(e.hits)+"/"+esc(e.trials)+" hits":""}</small><br>${esc(e.summary)}</div>`).join("");
+ }
+ return h+`<details><summary>Raw data</summary><pre>${esc(JSON.stringify(d,null,2))}</pre></details>`;
+}
+async function lookup(fn,full){
+ const id=$("#lid").value.trim();
+ if(!id)return st("Enter an assessment id first.","err");
+ if(!client)return st("Client not ready.","err");
+ st("Reading from Bradbury…");$("#out").innerHTML="";
+ try{const r=await client.readContract({address:ADDR,functionName:fn,args:[id]});st("");$("#out").innerHTML=view(r,full)}catch(e){fail(e)}
+}
+$("#b-sum").onclick=()=>lookup("get_risk_summary",false);
+$("#b-full").onclick=()=>lookup("get_assessment",true);
+
+async function count(){try{$("#count").textContent=String(await client.readContract({address:ADDR,functionName:"get_dataset_count",args:[]}))}catch(e){$("#count").textContent="?";fail(e)}}
 const mk=acc=>sdk.createClient(acc?{chain,account:acc}:{chain});
-async function count(){try{$("count").textContent=String(await client.readContract({address:ADDR,functionName:"get_dataset_count",args:[]}))}catch(e){$("count").textContent="unavailable";fail(e)}}
-if(!chain){say("testnetBradbury is not exported by this SDK version. Exports: "+Object.keys(chains).join(", "))}
+if(!chain)st("testnetBradbury is not exported by this SDK version. Exports: "+Object.keys(chains).join(", "),"err");
 else{client=mk();count()}
-$("conn").onclick=async()=>{try{
- if(!window.ethereum)return say("No wallet found in this browser. Open this page inside a wallet browser (e.g. MetaMask).");
+$("#conn").onclick=async()=>{try{
+ if(!window.ethereum)return st("No wallet found. Open this page inside a wallet browser (e.g. MetaMask).","err");
  const r=await window.ethereum.request({method:"eth_requestAccounts"});
  account=r[0];client=mk(account);
  try{await client.connect("testnetBradbury")}catch(e){}
- $("wal").textContent=account;count();
+ $("#wal").textContent=account;$("#conn").textContent=short(account);count();st("Wallet connected.","ok");
 }catch(e){fail(e)}};
-for(const [fn,s] of Object.entries(SPEC)){
- const d=document.createElement("details");
- d.innerHTML="<summary>"+fn+"</summary>"+s.f.map(([n,o])=>"<label>"+n+"</label>"+
-  (Array.isArray(o)?"<select name="+n+">"+o.map(x=>"<option>"+x+"</option>").join("")+"</select>":"<input name="+n+(o==="int"?" type=number min=0 value=0":"")+">")).join("")+
-  "<button>"+(s.w?"Send transaction":"Read")+"</button>";
- d.querySelector("button").onclick=async()=>{try{
-  if(!client)return say("Client not ready.");
-  const args=s.f.map(([n,o])=>{const v=d.querySelector("[name="+n+"]").value;return o==="int"?BigInt(v||0):v});
-  if(!s.w){say("Reading...");return say(await client.readContract({address:ADDR,functionName:fn,args}))}
-  if(!account)return say("Connect a wallet first.");
-  say("Sending...");
-  const hash=await client.writeContract({address:ADDR,functionName:fn,args,value:0n});
-  say("Tx hash: "+hash+"\nWaiting for ACCEPTED...");
-  const rc=await client.waitForTransactionReceipt({hash,status:"ACCEPTED",retries:60,interval:5000});
-  say({hash,receipt:rc});count();
- }catch(e){fail(e)}};
- $("forms").appendChild(d);
+
+const ET=["PROVENANCE_RECORD","LABEL_AUDIT","FEATURE_ANALYSIS","TRIGGER_TEST","CONTROL_TEST","CLEAN_BASELINE","REPRODUCTION","OTHER"];
+const ST_=["EVIDENCE_SUBMITTED","ASSESSED","UNDER_REVIEW","REJECTED","CLOSED"];
+const FORMS={
+ register:{fn:"register_dataset",title:"Register a dataset",f:[["assessment_id","text","e.g. my-dataset-001"],["dataset_name","text"],["dataset_version","text","1.0.0"],["content_hash","text","64 hex characters"],["provenance","area","Where the data came from"],["model_name","text","Optional"],["model_version","text","Optional"]]},
+ evidence:{fn:"submit_evidence",title:"Submit evidence",f:[["assessment_id","text"],["evidence_type",ET],["nature",["OBSERVATION","ALLEGATION"]],["summary","area"],["method","area","Required (40+ chars) for test types"],["trials","int"],["hits","int"]]},
+ assess:{fn:"assess_dataset",title:"Run assessment",note:"Validators evaluate the stored evidence. This can take a minute.",f:[["assessment_id","text"]]},
+ status:{fn:"update_assessment_status",title:"Update status",f:[["assessment_id","text"],["new_status",ST_]]}
+};
+for(const [k,F] of Object.entries(FORMS)){
+ const p=document.createElement("section");p.className="card panel";p.id="p-"+k;p.hidden=true;
+ p.innerHTML=`<h3>${F.title}</h3>${F.note?`<p class="sub">${F.note}</p>`:`<p class="sub">Needs a connected wallet.</p>`}`+F.f.map(([n,t,ph])=>{
+  const lb=`<label>${nice(n)}</label>`;
+  if(Array.isArray(t))return lb+`<select name="${n}">${t.map(o=>`<option>${o}</option>`).join("")}</select>`;
+  if(t==="area")return lb+`<textarea name="${n}" placeholder="${esc(ph||"")}"></textarea>`;
+  if(t==="int")return lb+`<input name="${n}" type="number" min="0" value="0" inputmode="numeric">`;
+  return lb+`<input name="${n}" placeholder="${esc(ph||"")}" autocapitalize="off" autocorrect="off">`;
+ }).join("")+`<button class="btn pri">Send transaction</button>`;
+ const btn=p.querySelector("button");
+ btn.onclick=async()=>{try{
+  if(!client)return st("Client not ready.","err");
+  if(!account)return st("Connect a wallet first.","err");
+  const args=F.f.map(([n,t])=>{const v=p.querySelector(`[name="${n}"]`).value;return t==="int"?BigInt(v||0):v});
+  btn.disabled=true;st("Sending transaction…");
+  const hash=await client.writeContract({address:ADDR,functionName:F.fn,args,value:0n});
+  st("Sent. Hash:\n"+hash+"\nWaiting for the network to accept it…");
+  await client.waitForTransactionReceipt({hash,status:"ACCEPTED",retries:60,interval:5000});
+  st("Accepted.\n"+hash,"ok");$("#lid").value=args[0];count();
+ }catch(e){fail(e)}finally{btn.disabled=false}};
+ $("#forms").appendChild(p);
 }
+$("#nav").onclick=e=>{const t=e.target.dataset&&e.target.dataset.t;if(!t)return;
+ document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+ document.querySelectorAll(".panel").forEach(p=>p.hidden=p.id!=="p-"+t)};
 </script></body></html>
